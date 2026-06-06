@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>M-Pesa STK Push Daraja API Payment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b2b26 0%, #0a1f1c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .payment-card {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 48px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .payment-card:hover {
+            transform: scale(1.01);
+        }
+
+        .mpesa-header {
+            background: #1f2e2b;
+            background-image: linear-gradient(135deg, #1e3b32 0%, #0e2a23 100%);
+            padding: 1.8rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .mpesa-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.3px;
+            margin-bottom: 8px;
+        }
+
+        .mpesa-logo span {
+            background: #00b843;
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .tagline {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        .payment-body {
+            padding: 2rem 2rem 1.8rem;
+        }
+
+        .amount-section {
+            background: #f7fafc;
+            border-radius: 32px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.8rem;
+            border: 1px solid #e6edf2;
+        }
+
+        .amount-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: #3b5c54;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .currency-input {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .currency-symbol {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e2e2a;
+        }
+
+        #amountInput {
+            font-size: 2.2rem;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            width: 160px;
+            outline: none;
+            color: #0f2c26;
+            padding: 6px 0;
+            font-family: monospace;
+        }
+
+        #amountInput:focus {
+            border-bottom: 2px solid #00b843;
+        }
+
+        .amount-hint {
+            font-size: 0.7rem;
+            color: #5f7c74;
+            margin-top: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #1f3e38;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .phone-wrapper {
+            display: flex;
+            align-items: center;
+            background: #f7fafc;
+            border-radius: 60px;
+            padding: 4px 6px 4px 20px;
+            border: 1px solid #dee8ec;
+            transition: all 0.2s;
+        }
+
+        .phone-wrapper:focus-within {
+            border-color: #00b843;
+            box-shadow: 0 0 0 3px rgba(0, 184, 67, 0.2);
+        }
+
+        .country-code {
+            font-weight: 600;
+            color: #1e3b32;
+            background: #eef3f0;
+            padding: 8px 12px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+
+        #phoneInput {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 14px 12px;
+            font-size: 1rem;
+            outline: none;
+            font-weight: 500;
+            color: #0b2b26;
+        }
+
+        .pay-button {
+            width: 100%;
+            background: #00b843;
+            border: none;
+            padding: 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 20px;
+            box-shadow: 0 8px 20px rgba(0, 184, 67, 0.25);
+        }
+
+        .pay-button:hover {
+            background: #009e3a;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0, 184, 67, 0.35);
+        }
+
+        .pay-button:active {
+            transform: translateY(1px);
+        }
+
+        .pay-button:disabled {
+            background: #94b7ad;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status-card {
+            margin: 20px 0 0;
+            background: #f0f6f3;
+            border-radius: 28px;
+            padding: 0.9rem 1.2rem;
+            font-size: 0.85rem;
+            border-left: 5px solid #00b843;
+            transition: all 0.2s;
+        }
+
+        .status-message {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-weight: 500;
+            color: #1f423b;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cfe6df;
+            border-top-color: #00b843;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-status {
+            border-left-color: #e34d4c;
+            background: #fff3f2;
+            color: #b43a38;
+        }
+
+        .success-status {
+            border-left-color: #00b843;
+            background: #e2f3ea;
+        }
+
+        .note {
+            font-size: 0.7rem;
+            text-align: center;
+            color: #6e9288;
+            margin-top: 18px;
+        }
+        
+        footer {
+            background: #fefefe;
+            padding: 0.8rem;
+            text-align: center;
+            border-top: 1px solid #e2ebe6;
+            font-size: 0.7rem;
+            color: #5a7c72;
+        }
+    </style>
+</head>
+<body>
+
+<div class="payment-card">
+    <div class="mpesa-header">
+        <div class="mpesa-logo">
+            🟢 M-PESA 
+            <span>STK Push</span>
+        </div>
+        <div class="tagline">Lipa Na M-Pesa • Instant Payment Request</div>
+    </div>
+
+    <div class="payment-body">
+        <div class="amount-section">
+            <div class="amount-label">
+                💰 PAYMENT AMOUNT (KES)
+            </div>
+            <div class="currency-input">
+                <span class="currency-symbol">KSh</span>
+                <input type="number" id="amountInput" value="10" step="1" min="1">
+            </div>
+            <div class="amount-hint">Enter amount between 1 – 150,000 KES</div>
+        </div>
+
+        <div class="input-group">
+            <div class="input-label">
+                📱 M-PESA REGISTERED PHONE
+            </div>
+            <div class="phone-wrapper">
+                <span class="country-code">+254</span>
+                <input type="tel" id="phoneInput" placeholder="712345678" value="712345678" maxlength="9">
+            </div>
+            <div class="amount-hint">Example: 712345678 (no leading zero)</div>
+        </div>
+
+        <button class="pay-button" id="payBtn">
+            <span>🔔</span> REQUEST PAYMENT
+        </button>
+
+        <div id="statusContainer" class="status-card" style="display: none;">
+            <div class="status-message" id="statusMsg">
+                <span>🔄</span> <span id="statusText">Initializing...</span>
+            </div>
+        </div>
+        <div class="note">
+            ⚡ You'll receive a pop-up on your phone. Enter M-Pesa PIN to complete.
+        </div>
+    </div>
+    <footer>
+        🔒 Secured by Daraja API (Safaricom) • Test Environment
+    </footer>
+</div>
+
+<script>
+    const payBtn = document.getElementById('payBtn');
+    const amountInput = document.getElementById('amountInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const statusContainer = document.getElementById('statusContainer');
+    const statusTextSpan = document.getElementById('statusText');
+
+    function setStatus(message, type = 'info') {
+        statusContainer.style.display = 'block';
+        statusTextSpan.innerText = message;
+        statusContainer.classList.remove('error-status', 'success-status');
+        if (type === 'error') {
+            statusContainer.classList.add('error-status');
+        } else if (type === 'success') {
+            statusContainer.classList.add('success-status');
+        }
+    }
+
+    function validateInputs() {
+        let amount = parseFloat(amountInput.value);
+        if (isNaN(amount) || amount <= 0) {
+            setStatus('❌ Please enter a valid amount (positive number)', 'error');
+            return false;
+        }
+        if (amount > 150000) {
+            setStatus('⚠️ Amount exceeds 150,000 KES limit', 'error');
+            return false;
+        }
+        
+        let phoneRaw = phoneInput.value.trim();
+        let digitsOnly = phoneRaw.replace(/\D/g, '');
+        
+        if (digitsOnly.length === 9) {
+            if (!/^[17]\d{8}$/.test(digitsOnly)) {
+                setStatus('📞 Invalid phone number: must be 9 digits starting with 7 or 1', 'error');
+                return false;
+            }
+            return true;
+        } else {
+            setStatus('📞 Use 9-digit M-Pesa number (e.g., 712345678)', 'error');
+            return false;
+        }
+    }
+
+    async function initiateStkPush() {
+        if (!validateInputs()) return;
+
+        const amount = parseFloat(amountInput.value);
+        let phoneNumber = phoneInput.value.trim().replace(/\D/g, '');
+
+        payBtn.disabled = true;
+        const originalBtnHtml = payBtn.innerHTML;
+        payBtn.innerHTML = `<span class="spinner"></span> Sending STK Push...`;
+        setStatus('📡 Requesting STK push prompt from M-Pesa ...', 'info');
+
+        try {
+            const response = await fetch('/stkpush', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: amount,
+                    phone: phoneNumber
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                let errorMsg = data.error || data.message || 'STK push failed';
+                setStatus(`❌ ${errorMsg}`, 'error');
+                return;
+            }
+
+            if (data.success === true || data.ResponseCode === '0') {
+                setStatus(`✅ STK Push sent! Check your phone (${phoneNumber}) and enter PIN to complete payment of KES ${amount}.`, 'success');
+            } else {
+                let errMsg = data.errorMessage || data.ResponseDescription || 'Service error';
+                setStatus(`⚠️ ${errMsg}`, 'error');
+            }
+
+        } catch (error) {
+            console.error('STK Push fetch error:', error);
+            setStatus(`🌐 Network error: Could not connect to server. Make sure backend is running on port 5000.`, 'error');
+        } finally {
+            payBtn.disabled = false;
+            payBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
+    payBtn.addEventListener('click', initiateStkPush);
+</script>
+</body>
+</html>
