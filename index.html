@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M-Pesa STK Push Daraja API Payment</title>
+    <title>M-Pesa STK Push Daraja API Payment + Receipt History</title>
     <style>
         * {
             margin: 0;
@@ -14,11 +14,20 @@
 
         body {
             min-height: 100vh;
-            background: linear-gradient(145deg, #0b2b26 0%, #0a1f1c 100%);
+            background: rgb(147, 246, 107);
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 1.5rem;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
         }
 
         .payment-card {
@@ -35,9 +44,129 @@
             transform: scale(1.01);
         }
 
+        .history-panel {
+            flex: 1;
+            min-width: 280px;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 48px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 700px;
+        }
+
+        .history-header {
+            background: rgb(52, 125, 52);
+            padding: 1.2rem 1.5rem;
+            color: white;
+        }
+
+        .history-header h3 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .history-list {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            max-height: 550px;
+        }
+
+        .receipt-item {
+            background: #f9fefb;
+            border-radius: 24px;
+            padding: 0.9rem;
+            margin-bottom: 0.8rem;
+            border-left: 5px solid #00b843;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.15s;
+        }
+
+        .receipt-item.pending {
+            border-left-color: #f5a623;
+            background: #fffaf0;
+        }
+
+        .receipt-item.completed {
+            border-left-color: #00b843;
+        }
+
+        .receipt-item.failed {
+            border-left-color: #e34d4c;
+            background: #fff4f4;
+        }
+
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .receipt-amount {
+            font-size: 1.2rem;
+            color: #1f3e38;
+        }
+
+        .receipt-status {
+            font-size: 0.7rem;
+            background: #eef3f0;
+            padding: 3px 10px;
+            border-radius: 60px;
+            font-weight: 600;
+        }
+
+        .receipt-status.pending { background: #feedd5; color: #b45f06; }
+        .receipt-status.completed { background: #dff0e6; color: #00703c; }
+        .receipt-status.failed { background: #ffdfdf; color: #b00020; }
+
+        .receipt-details {
+            font-size: 0.75rem;
+            color: #5a7c72;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .clear-history {
+            background: transparent;
+            border: 1px solid #cbdcd6;
+            padding: 8px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #3c6e5f;
+            cursor: pointer;
+            margin: 0 1rem 1rem auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            width: fit-content;
+        }
+
+        .clear-history:hover {
+            background: #ecf9f2;
+            border-color: #00b843;
+        }
+
+        .no-history {
+            text-align: center;
+            color: #94b7ad;
+            padding: 2rem;
+            font-size: 0.85rem;
+        }
+
         .mpesa-header {
-            background: #1f2e2b;
-            background-image: linear-gradient(135deg, #1e3b32 0%, #0e2a23 100%);
+            background: rgb(52, 125, 52);
             padding: 1.8rem 2rem;
             text-align: center;
             color: white;
@@ -52,6 +181,7 @@
             font-size: 1.8rem;
             letter-spacing: -0.3px;
             margin-bottom: 8px;
+            flex-wrap: wrap;
         }
 
         .mpesa-logo span {
@@ -272,61 +402,147 @@
             font-size: 0.7rem;
             color: #5a7c72;
         }
+        
+        .mpesa-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .quick-amounts {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .chip {
+            background: #eef3f0;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1f3e38;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        
+        .chip:hover {
+            background: #00b84320;
+            transform: scale(0.96);
+        }
+
+        .simulate-complete-btn, .retry-simulate-btn {
+            background: #00b84310;
+            border: 1px solid #00b843;
+            border-radius: 40px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: 0.1s;
+        }
+        
+        .simulate-complete-btn:hover, .retry-simulate-btn:hover {
+            background: #00b84320;
+            transform: scale(0.98);
+        }
+        
+        .retry-simulate-btn {
+            border-color: #e34d4c;
+            color: #b00020;
+        }
     </style>
 </head>
 <body>
 
-<div class="payment-card">
-    <div class="mpesa-header">
-        <div class="mpesa-logo">
-            🟢 M-PESA 
-            <span>STK Push</span>
+<div class="app-container">
+    <div class="payment-card">
+        <div class="mpesa-header">
+            <div class="mpesa-logo">
+                <div>
+                    M-PESA STK Push EXAMPLE 
+                </div>
+                <div>
+                    You can cancel the payment 
+                </div>
+            </div>
+            <div class="tagline">
+                Lipa Na M-Pesa • Instant Payment Request
+            </div>
+            <br>
+            <div>
+                Powered by Daraja API (Safaricom) - Test Environment
+            </div>
         </div>
-        <div class="tagline">Lipa Na M-Pesa • Instant Payment Request</div>
+
+        <div class="payment-body">
+            <div class="amount-section">
+                <div class="amount-label">
+                    PAYMENT AMOUNT (KES)
+                </div>
+                <div class="currency-input">
+                    <span class="currency-symbol">KSh</span>
+                    <input type="number" id="amountInput" value="10" step="1" min="1">
+                </div>
+                <div class="amount-hint">Enter amount between 1 – 150,000 KES</div>
+                <div class="quick-amounts">
+                    <span class="chip" data-amount="50">KES 50</span>
+                    <span class="chip" data-amount="100">KES 100</span>
+                    <span class="chip" data-amount="500">KES 500</span>
+                    <span class="chip" data-amount="1000">KES 1000</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-label">
+                    M-PESA REGISTERED PHONE
+                </div>
+                <div class="phone-wrapper">
+                    <span class="country-code">+254</span>
+                    <input type="tel" id="phoneInput" placeholder="712345678" value="712345678" maxlength="9">
+                </div>
+                <div class="amount-hint"></div>
+            </div>
+
+            <button class="pay-button" id="payBtn">
+                <span></span> REQUEST PAYMENT
+            </button>
+
+            <div id="statusContainer" class="status-card" style="display: none;">
+                <div class="status-message" id="statusMsg">
+                    <span>🔄</span> <span id="statusText">Initializing...</span>
+                </div>
+            </div>
+            <div class="note">
+                You'll receive a pop-up on your phone. Enter M-Pesa PIN to complete.
+            </div>
+        </div>
+        <footer>
+            Secured by Daraja API (Safaricom) • Test Environment
+        </footer>
     </div>
 
-    <div class="payment-body">
-        <div class="amount-section">
-            <div class="amount-label">
-                💰 PAYMENT AMOUNT (KES)
-            </div>
-            <div class="currency-input">
-                <span class="currency-symbol">KSh</span>
-                <input type="number" id="amountInput" value="10" step="1" min="1">
-            </div>
-            <div class="amount-hint">Enter amount between 1 – 150,000 KES</div>
+    <div class="history-panel">
+        <div class="history-header">
+            <h3>📋 Payment Receipts</h3>
+            <p style="font-size:0.7rem; opacity:0.8;">Track STK Push requests & status</p>
         </div>
-
-        <div class="input-group">
-            <div class="input-label">
-                📱 M-PESA REGISTERED PHONE
-            </div>
-            <div class="phone-wrapper">
-                <span class="country-code">+254</span>
-                <input type="tel" id="phoneInput" placeholder="712345678" value="712345678" maxlength="9">
-            </div>
-            <div class="amount-hint">Example: 712345678 (no leading zero)</div>
+        <div id="receiptListContainer" class="history-list">
+            <div class="no-history">No payment requests yet.<br>Make a payment to see history.</div>
         </div>
-
-        <button class="pay-button" id="payBtn">
-            <span>🔔</span> REQUEST PAYMENT
-        </button>
-
-        <div id="statusContainer" class="status-card" style="display: none;">
-            <div class="status-message" id="statusMsg">
-                <span>🔄</span> <span id="statusText">Initializing...</span>
-            </div>
-        </div>
-        <div class="note">
-            ⚡ You'll receive a pop-up on your phone. Enter M-Pesa PIN to complete.
-        </div>
+        <button id="clearHistoryBtn" class="clear-history">🗑️ Clear history</button>
     </div>
-    <footer>
-        🔒 Secured by Daraja API (Safaricom) • Test Environment
-    </footer>
 </div>
 
 <script>
+    // ============================================
+    // ORIGINAL CODE (kept exactly as provided)
+    // ============================================
     const payBtn = document.getElementById('payBtn');
     const amountInput = document.getElementById('amountInput');
     const phoneInput = document.getElementById('phoneInput');
@@ -381,6 +597,9 @@
         payBtn.innerHTML = `<span class="spinner"></span> Sending STK Push...`;
         setStatus('📡 Requesting STK push prompt from M-Pesa ...', 'info');
 
+        // Add receipt before request (enhancement)
+        const receiptId = addReceipt(amount, phoneNumber, 'pending', 'Sending STK Push request...');
+
         try {
             const response = await fetch('/stkpush', {
                 method: 'POST',
@@ -398,19 +617,23 @@
             if (!response.ok) {
                 let errorMsg = data.error || data.message || 'STK push failed';
                 setStatus(`❌ ${errorMsg}`, 'error');
+                updateReceiptStatus(receiptId, 'failed', errorMsg);
                 return;
             }
 
             if (data.success === true || data.ResponseCode === '0') {
                 setStatus(`✅ STK Push sent! Check your phone (${phoneNumber}) and enter PIN to complete payment of KES ${amount}.`, 'success');
+                updateReceiptStatus(receiptId, 'pending', `STK Push sent successfully. Awaiting M-Pesa PIN confirmation.`);
             } else {
                 let errMsg = data.errorMessage || data.ResponseDescription || 'Service error';
                 setStatus(`⚠️ ${errMsg}`, 'error');
+                updateReceiptStatus(receiptId, 'failed', errMsg);
             }
 
         } catch (error) {
             console.error('STK Push fetch error:', error);
             setStatus(`🌐 Network error: Could not connect to server. Make sure backend is running on port 5000.`, 'error');
+            updateReceiptStatus(receiptId, 'failed', `Network error: ${error.message}`);
         } finally {
             payBtn.disabled = false;
             payBtn.innerHTML = originalBtnHtml;
@@ -418,6 +641,155 @@
     }
 
     payBtn.addEventListener('click', initiateStkPush);
+    
+    // ============================================
+    // NEW FEATURES (Receipt history, quick amounts, etc.)
+    // ============================================
+    
+    let paymentsReceipts = [];
+
+    function loadReceipts() {
+        const stored = localStorage.getItem('mpesa_stk_receipts');
+        if (stored) {
+            try {
+                paymentsReceipts = JSON.parse(stored);
+            } catch(e) { paymentsReceipts = []; }
+        } else {
+            paymentsReceipts = [];
+        }
+        renderReceipts();
+    }
+
+    function saveReceipts() {
+        localStorage.setItem('mpesa_stk_receipts', JSON.stringify(paymentsReceipts));
+        renderReceipts();
+    }
+
+    function addReceipt(amount, phone, status = 'pending', responseMsg = '') {
+        const newReceipt = {
+            id: Date.now() + Math.random().toString(36).substr(2, 6),
+            amount: amount,
+            phone: phone,
+            status: status,
+            timestamp: new Date().toISOString(),
+            responseMessage: responseMsg || 'STK Push initiated',
+            requestDate: new Date().toLocaleString()
+        };
+        paymentsReceipts.unshift(newReceipt);
+        if (paymentsReceipts.length > 30) paymentsReceipts.pop();
+        saveReceipts();
+        return newReceipt.id;
+    }
+
+    function updateReceiptStatus(receiptId, newStatus, message = '') {
+        const idx = paymentsReceipts.findIndex(r => r.id == receiptId);
+        if (idx !== -1) {
+            paymentsReceipts[idx].status = newStatus;
+            if (message) paymentsReceipts[idx].responseMessage = message;
+            paymentsReceipts[idx].updatedAt = new Date().toLocaleString();
+            saveReceipts();
+        }
+    }
+
+    function renderReceipts() {
+        const container = document.getElementById('receiptListContainer');
+        if (!container) return;
+        if (!paymentsReceipts.length) {
+            container.innerHTML = '<div class="no-history">✨ No payment requests yet.<br>Make a payment to see receipts.</div>';
+            return;
+        }
+        container.innerHTML = '';
+        paymentsReceipts.forEach(receipt => {
+            const receiptDiv = document.createElement('div');
+            receiptDiv.className = `receipt-item ${receipt.status}`;
+            const statusText = receipt.status === 'pending' ? '⏳ Pending' : (receipt.status === 'completed' ? '✅ Completed' : '❌ Failed');
+            const statusClass = receipt.status;
+            const formattedDate = receipt.requestDate || new Date(receipt.timestamp).toLocaleString();
+            
+            let actionButton = '';
+            if (receipt.status === 'pending') {
+                actionButton = `<button class="simulate-complete-btn" data-id="${receipt.id}" style="background:#00b84310; border:1px solid #00b843; border-radius:40px; padding:4px 10px; font-size:0.7rem; cursor:pointer; margin-top:6px;">💳 Simulate Payment Success (Demo)</button>`;
+            } else if (receipt.status === 'failed') {
+                actionButton = `<button class="retry-simulate-btn" data-amount="${receipt.amount}" data-phone="${receipt.phone}" style="background:#e34d4c10; border:1px solid #e34d4c; border-radius:40px; padding:4px 10px; font-size:0.7rem; cursor:pointer; margin-top:6px;">🔄 Retry Payment</button>`;
+            }
+            
+            receiptDiv.innerHTML = `
+                <div class="receipt-header">
+                    <span class="receipt-amount">KES ${receipt.amount}</span>
+                    <span class="receipt-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="receipt-details">
+                    <span>📞 +254 ${receipt.phone}</span>
+                    <span>🕒 ${formattedDate}</span>
+                </div>
+                <div style="font-size:0.7rem; color:#3a6b5d; margin-top:5px;">${receipt.responseMessage}</div>
+                ${actionButton ? `<div style="margin-top:6px;">${actionButton}</div>` : ''}
+            `;
+            container.appendChild(receiptDiv);
+        });
+        
+        document.querySelectorAll('.simulate-complete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-id');
+                if (id) {
+                    updateReceiptStatus(id, 'completed', 'Payment confirmed via M-Pesa (demo simulation)');
+                    setStatus(`✅ Demo: Payment completed for receipt`, 'success');
+                    setTimeout(() => {
+                        if (statusContainer.style.display === 'block') {
+                            // keep visible
+                        }
+                    }, 2000);
+                }
+            });
+        });
+        
+        document.querySelectorAll('.retry-simulate-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const amount = btn.getAttribute('data-amount');
+                const phone = btn.getAttribute('data-phone');
+                if (amount && phone) {
+                    amountInput.value = amount;
+                    phoneInput.value = phone;
+                    await initiateStkPush();
+                }
+            });
+        });
+    }
+    
+    // Quick amount chips
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const amt = chip.getAttribute('data-amount');
+            if (amt) {
+                amountInput.value = amt;
+                setStatus(`Amount set to KES ${amt}`, 'info');
+                setTimeout(() => {
+                    if (statusContainer.style.display === 'block' && !statusContainer.classList.contains('error-status')) {
+                        // optional auto-clear after 2 sec
+                    }
+                }, 1500);
+            }
+        });
+    });
+    
+    // Clear history button
+    const clearBtn = document.getElementById('clearHistoryBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Clear all payment receipts?')) {
+                paymentsReceipts = [];
+                saveReceipts();
+                setStatus('📭 Payment history cleared', 'info');
+            }
+        });
+    }
+    
+    // Load receipts from storage
+    loadReceipts();
+    
+    console.log('✅ Enhanced M-Pesa Payment with Receipt History - Button working!');
 </script>
 </body>
 </html>
