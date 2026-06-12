@@ -172,4 +172,4 @@ if __name__ == '__main__':
     print(f"🌐 Server running at: http://localhost:5000")
     print(f"⚠️  Make sure to update CONSUMER_KEY and CONSUMER_SECRET")
     print("=" * 50)
-    app.run(host='0.0.0.0', port=5000, debug=True)
+app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
